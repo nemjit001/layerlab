@@ -623,7 +623,6 @@ Float BSDFStorage::pdf(Float mu_i, Float mu_o, Float phi_d, const float *basisCo
     }
 }
 
-#if 0
 Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
         Float &pdf, const Point2 &sample, const float *basisCoeffs) const {
     if (!basisCoeffs) {
@@ -631,15 +630,16 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
         basisCoeffs = __basisCoeffsDefault;
     }
 
-    size_t knotOffsetI, n = nodeCount();
+    ssize_t knotOffsetI;
+    size_t n = nodeCount();
     float knotWeightsI[4];
 
     /* Lookup spline nodes and weights for mu_i */
-    spline::evalSplineWeights(m_nodes, m_header->nNodes, (float) mu_i, knotOffsetI, knotWeightsI);
+    spline::evalSplineWeights(m_nodes, m_header->nNodes, (float)mu_i, knotOffsetI, knotWeightsI);
 
     /* Account for energy loss */
     float normalization = evalLatitudinalCDF(knotOffsetI, knotWeightsI, n-1, basisCoeffs);
-    float sample_y = (float) sample.y * normalization;
+    float sample_y = (float)sample.y() * normalization;
 
     /* Binary search for the spline segment containing the outgoing angle */
     size_t first = 0, len = n;
@@ -653,7 +653,7 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
         }
     }
 
-    size_t index = std::min(n-2, std::max((size_t) 0, first-1));
+    size_t index = std::min(n - 2, std::max((size_t)0, first - 1));
 
     /* The spline segment to be sampled has been chosen. Determine the
        values of its nodes and then use the inversion method to sample
@@ -732,10 +732,10 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
             if (weight == 0)
                 continue;
 
-            std::pair<const float *, OffsetType> coeffAndCount = coeffAndCount(knotOffsetO + o, knotOffsetI + i);
+            std::pair<const float *, OffsetType> coeffAndCountPair = coeffAndCount(knotOffsetO + o, knotOffsetI + i);
 
-            const float *source = coeffAndCount.first;
-            OffsetType count = coeffAndCount.second;
+            const float *source = coeffAndCountPair.first;
+            OffsetType count = coeffAndCountPair.second;
 
             if (count == 0)
                 continue;
@@ -779,6 +779,7 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
 
     if (coeffs[0][0] == 0) {
         weight = Color3(0.0f);
+#if 0
     } else if (m_header->flags & BSDF_STORAGE_FLAGS_EXTRAPOLATED) {
         for (size_t ch=0; ch<nChannels; ++ch) {
             coeffs[ch][0] = std::max(0.0f, coeffs[ch][0]);
@@ -791,7 +792,7 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
         pdfPhi = HarmonicExtrapolation::pdf(coeffs[0], phi_d_sp);
 
         if (nChannels == 1) {
-            weight = Color3(phiWeight * 2 * M_PI / pdfMu);
+            weight = Color3(phiWeight * 2.0 * 3.141592 / pdfMu);
         } else {
             Float Y = HarmonicExtrapolation::eval(coeffs[0], phi_d_sp);
             Float R = HarmonicExtrapolation::eval(coeffs[1], phi_d_sp);
@@ -800,18 +801,19 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
             weight.fromLinearRGB(R, G, B);
             weight /= pdfPhi * pdfMu;
         }
+#endif
     } else if (nChannels == 1) {
         weight = Color3(std::max((Float) 0.0f, sampleFourier(coeffs[0], m_reciprocals,
-            nCoeffs, (float) sample.x, pdfPhi, phi_d) / pdfMu));
+            nCoeffs, (float) sample.x(), pdfPhi, phi_d) / pdfMu));
     } else {
         weight = sampleFourier3(coeffs, m_reciprocals, nCoeffs,
-            (float) sample.x, pdfPhi, phi_d) / pdfMu;
+            (float) sample.x(), pdfPhi, phi_d) / pdfMu;
     }
     weight.clamp();
 
     pdf = std::max((Float) 0, pdfPhi * pdfMu);
 
-    #if 1
+    #if 0
         if (!std::isfinite(phi_d) || !std::isfinite(weight.getLuminance())) {
             cout << "Coeffs: ";
             for (size_t i=0; i<nCoeffs; ++i) {
@@ -829,7 +831,6 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
 
     return weight;
 }
-#endif
 
 void BSDFStorage::interpolateSeries(Float mu_i, Float mu_o, int basis, int channel, float *coeffs) const {
     ssize_t knotOffsetO, knotOffsetI;

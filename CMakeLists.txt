@@ -115,7 +115,7 @@ include_directories(
   include
 )
 
-pybind11_add_module(layerlab SHARED
+set(LAYERLAB_SOURCES
   # Layer lab files
   include/layer/common.h
   include/layer/color.h
@@ -134,11 +134,13 @@ pybind11_add_module(layerlab SHARED
   include/layer/log.h        src/log.cpp
   include/layer/storage.h    src/storage.cpp
   include/layer/simd.h       src/simd.cpp
+)
 
-  # Python API
-  src/python.cpp src/py_math.cpp src/py_fourier.cpp
-  src/py_spline.cpp src/py_layer.cpp src/py_quad.cpp src/py_fresnel.cpp
-  src/py_filesystem.cpp
+pybind11_add_module(layerlab SHARED ${LAYERLAB_SOURCES}
+    # Python API
+    src/python.cpp src/py_math.cpp src/py_fourier.cpp
+    src/py_spline.cpp src/py_layer.cpp src/py_quad.cpp src/py_fresnel.cpp
+    src/py_filesystem.cpp
 )
 
 add_custom_target(mkdoc COMMAND
@@ -150,6 +152,10 @@ add_custom_target(mkdoc COMMAND
 set_target_properties(layerlab PROPERTIES PREFIX "")
 link_directories(${CMAKE_CURRENT_BUILD_DIR}/tbb)
 target_link_libraries(layerlab PRIVATE tbb_static)
+
+add_library(layerlab_static STATIC ${LAYERLAB_SOURCES})
+target_link_directories(layerlab_static PRIVATE ${CMAKE_CURRENT_BUILD_DIR}/tbb)
+target_link_libraries(layerlab_static PRIVATE tbb_static)
 
 if (PKG_FFTW_FOUND)
   target_link_libraries(layerlab PRIVATE ${FFTW_THREADS_LIB})

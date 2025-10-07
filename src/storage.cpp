@@ -448,8 +448,8 @@ Color3 BSDFStorage::eval(Float mu_i, Float mu_o, Float phi_d, const float *basis
         basisCoeffs = __basisCoeffsDefault;
     }
 
-    ssize_t knotOffsetO, knotOffsetI;
-    float knotWeightsO[4], knotWeightsI[4];
+    ssize_t knotOffsetO = 0, knotOffsetI = 0;
+    float knotWeightsO[4]{}, knotWeightsI[4]{};
 
     spline::evalSplineWeights(m_nodes, m_header->nNodes, (float) mu_o, knotOffsetO, knotWeightsO);
     spline::evalSplineWeights(m_nodes, m_header->nNodes, (float) mu_i, knotOffsetI, knotWeightsI);
@@ -548,8 +548,8 @@ Float BSDFStorage::pdf(Float mu_i, Float mu_o, Float phi_d, const float *basisCo
         basisCoeffs = __basisCoeffsDefault;
     }
 
-    ssize_t knotOffsetO, knotOffsetI;
-    float knotWeightsO[4], knotWeightsI[4];
+    ssize_t knotOffsetO = 0, knotOffsetI = 0;
+    float knotWeightsO[4]{}, knotWeightsI[4]{};
 
     spline::evalSplineWeights(m_nodes, m_header->nNodes, (float) mu_o, knotOffsetO, knotWeightsO);
     spline::evalSplineWeights(m_nodes, m_header->nNodes, (float) mu_i, knotOffsetI, knotWeightsI);
@@ -630,9 +630,9 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
         basisCoeffs = __basisCoeffsDefault;
     }
 
-    ssize_t knotOffsetI;
+    ssize_t knotOffsetI = 0;
     size_t n = nodeCount();
-    float knotWeightsI[4];
+    float knotWeightsI[4]{};
 
     /* Lookup spline nodes and weights for mu_i */
     spline::evalSplineWeights(m_nodes, m_header->nNodes, (float)mu_i, knotOffsetI, knotWeightsI);
@@ -715,8 +715,8 @@ Color3 BSDFStorage::sample(Float mu_i, Float &mu_o, Float &phi_d,
     }
     /* Outgoing zenith angle has been sampled -- interpolate
        Fourier coeff and sample the series */
-    ssize_t knotOffsetO;
-    float knotWeightsO[4];
+    ssize_t knotOffsetO = 0;
+    float knotWeightsO[4] {};
     spline::evalSplineWeights(m_nodes, m_header->nNodes, (float) mu_o, knotOffsetO, knotWeightsO);
 
     size_t nChannels = channelCount(), nBases = basisCount();
